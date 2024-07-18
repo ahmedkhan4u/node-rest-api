@@ -3,6 +3,7 @@ import multer from "multer";
 
 const allowedMimeTypes = [
     'image/jpeg',
+    'image/jpg',
     'image/png',
     'image/gif',
     'image/webp',
@@ -24,15 +25,18 @@ function fileFilter (req, file, cb) {
     // to indicate if the file should be accepted
   
     // To reject this file pass `false`, like so:
+    console.log(file.mimetype);
     if (!allowedMimeTypes.includes(file.mimetype)) {
+      console.log("If");
         cb(null, false)
     } else {
+      console.log("Else");
         cb(null, true)
     }
   
     // To accept the file pass `true`, like so:
     // You can always pass an error if something goes wrong:
-    cb(new Error('Unable to process file'))
+    // cb(new Error('Unable to process file'))
   }
 
 const storage = multer.diskStorage({
