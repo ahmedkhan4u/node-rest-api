@@ -108,7 +108,9 @@ const loginUser = asyncHandler(async (req, res) => {
   };
 
 
-  const userData = await User.findOne(user._id).select("-password -refreshToken")
+  const userData = await User.findOne(user._id).select("-password -refreshToken");
+
+  console.log("User Data Faizan : ", userData);
 
   return res
     .status(200)
@@ -158,9 +160,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 
  try {
-   const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET)
+   const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
  
-   const user = await User.findOne(decodedToken?._id);
+   const user = await User.findById(decodedToken?._id);
  
    if (!user) {
      throw new ApiError(401, "Invalid refresh token")
@@ -170,26 +172,24 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
      throw new ApiError(401, "Refresh token is expired")
    }
  
- 
    const userData = await User.findOne(user._id).select("-password -refreshToken")
- 
  
    const options = {
      httpOnly: true,
      secure: true,
    };
  
-   const { accessToken, newRefreshToken } = await generateAccessAndRefreshToken(
+   const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
      user
    );
    return res
      .status(200)
      .cookie("accessToken", accessToken, options)
-     .cookie("refreshToken", newRefreshToken, options)
+     .cookie("refreshToken", refreshToken, options)
      .json(
        new ApiResponse(
          200,
-         { user: userData, accessToken,refreshToken: newRefreshToken },
+         { user: userData, accessToken,refreshToken: refreshToken },
          "Access token refreshed"
        )
      );
@@ -197,6 +197,24 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   throw new ApiError(401, error?.message || "Invalid refresh token")
 }
 
+})
+
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+
+  const {oldPassword, newPassword} = req.body;
+
+  const user = await User.findById(req.user?._id)
+
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Incorrect old password")
+  }
+
+  user.password =  newPassword;
+  await user.save({validateBeforeSave: true});
+
+  res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"))
 
 })
 
