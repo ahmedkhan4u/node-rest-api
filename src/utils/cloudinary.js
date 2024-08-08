@@ -30,4 +30,19 @@ const uploadCloudinary = async function(localFilePath) {
 
 }
 
-export {uploadCloudinary}
+const deleteImageOnCloudinary = async (imagePath) => {
+    try {
+      const response = await cloudinary.uploader.destroy(imagePath, {
+        resource_type: "image",
+        invalidate: true,
+        type: "authenticated",
+      });
+  
+      return response;
+    } catch (error) {
+      return null;
+    }
+  };
+  
+
+export {uploadCloudinary, deleteImageOnCloudinary}
